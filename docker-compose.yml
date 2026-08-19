@@ -1,0 +1,39 @@
+services:
+  mysql-vuln:
+    image: mysql:8.0
+    container_name: mysql-vuln
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: beatdb
+      MYSQL_USER: beatuser
+      MYSQL_PASSWORD: beatpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ubeatuser", "-pbeatpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  app:
+    build: .
+    container_name: beats_backend
+    restart: unless-stopped
+    depends_on:
+      mysql-vuln:
+        condition: service_healthy
+    environment:
+      DJANGO_ALLOWED_HOSTS: "*"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  mysql_data:
