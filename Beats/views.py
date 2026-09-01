@@ -1,8 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import PermissionDenied, NotAuthenticated
-from rest_framework_simplejwt.backends import TokenBackend
-from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from Beats.models import Beat
 from Beats.serializer import BeatSerializer
@@ -11,45 +10,35 @@ class BeatViewSet(ModelViewSet):
     serializer_class = BeatSerializer
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
-    def initialize_request(self, request, *args, **kwargs):
-        request = super().initialize_request(request, *args, **kwargs)
+    # Fix C-01 : JWTAuthentication verifie la signature du token (HMAC-SHA256
+    # avec SECRET_KEY) avant de resoudre request.user. Avant, le role etait
+    # lu sur un payload decode avec verify=False -- n'importe qui pouvait
+    # fabriquer un token avec role:"Admin" sans connaitre la cle du serveur.
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-        # Parser manuellement le JWT sans vérification
-        token = request.headers.get("Authorization", "").replace("Bearer ", "")
-        try:
-            backend = TokenBackend(algorithm="HS256", signing_key=None)
-            payload = backend.decode(token, verify=False)
-            request.jwt_payload = payload
-        except Exception:
-            request.jwt_payload = {}
-        return request
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        if not hasattr(request, "jwt_payload") or "user_id" not in request.jwt_payload:
-            raise NotAuthenticated("Authentication required.")
+    def _role(self):
+        # request.user est resolu par JWTAuthentication a partir d'un token
+        # dont la signature a ete verifiee -- pas d'un payload arbitraire.
+        return getattr(self.request.user, "role", "Visitor")
 
     def get_queryset(self):
-        role = self.request.jwt_payload.get("role", "User")
-        return Beat.objects.all() if role == "Admin" else Beat.objects.filter(isPublished=True)
+        return Beat.objects.all() if self._role() == "Admin" else Beat.objects.filter(isPublished=True)
 
     def perform_create(self, serializer):
-        role = self.request.jwt_payload.get("role", "User")
-        if role == "Admin":
+        if self._role() == "Admin":
             serializer.save()
         else:
             raise PermissionDenied("You do not have permission to create this beat.")
 
     def perform_update(self, serializer):
-        role = self.request.jwt_payload.get("role", "User")
-        if role == "Admin":
+        if self._role() == "Admin":
             serializer.save()
         else:
             raise PermissionDenied("You do not have permission to update this beat.")
 
     def perform_destroy(self, instance):
-        role = self.request.jwt_payload.get("role", "User")
-        if role == "Admin":
+        if self._role() == "Admin":
             instance.delete()
         else:
             raise PermissionDenied("You do not have permission to delete this beat.")
