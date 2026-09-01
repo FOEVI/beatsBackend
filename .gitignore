@@ -22,3 +22,6 @@ build/
 
 # Docker
 docker-compose.override.yml
+
+db.sqlite3
+.env
