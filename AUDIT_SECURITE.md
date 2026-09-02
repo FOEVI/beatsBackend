@@ -201,9 +201,9 @@ et re-testee.
 
 Tableau des findings par severite, statut au 1er septembre 2026 :
 
-Severite Critique : 2 findings au total, 1 corrige (C-01), 1 ouvert (C-02)
+Severite Critique : 2 findings au total, 2 corriges (C-01, C-02)
 Severite Elevee : 4 findings au total, 2 corriges, 2 ouverts
-Severite Moyenne : 5 findings au total, 2 corriges, 3 ouverts
+Severite Moyenne : 5 findings au total, 1 corrige, 4 ouverts
 Severite Faible : 2 findings au total, 0 corrige
 
 SECTION 8 - C-01 CONTOURNEMENT TOTAL DE L'AUTHENTIFICATION JWT (CRITIQUE) - CORRIGE
@@ -331,7 +331,7 @@ Commits concernes : 477236c (nettoyage prealable du depot, retrait de
 db.sqlite3 et du fichier requirements.txt corrompu), 764e288 (correctif
 C-01).
 
-SECTION 11 - C-02 SECRETS COMMITES EN CLAIR (CRITIQUE) - OUVERT
+SECTION 11 - C-02 SECRETS COMMITES EN CLAIR (CRITIQUE) - CORRIGE
 
 Localisation : Source/settings.py, SECRET_KEY codee en dur, identifiants
 MySQL en dur dans docker-compose.yml.
@@ -342,13 +342,23 @@ en clair sur un depot public, elle est lisible par n'importe qui, ce qui
 permettrait de forger des tokens correctement signes, ce qui est pire que
 C-01 qui ne necessitait meme pas de connaitre la cle.
 
-Remediation prevue : charger ces valeurs via variables d'environnement
-(django-environ, deja en dependance mais non utilise pour ces valeurs),
-regenerer SECRET_KEY et changer les mots de passe si le depot a ete rendu
-public avec ces valeurs. Important : l'ancienne cle reste visible dans
-l'historique Git meme apres un futur correctif dans le code, un simple
-changement de valeur ne suffit pas a effacer l'exposition passee.
+Correctif applique le 2 septembre 2026 : SECRET_KEY et les identifiants
+MySQL (NAME, USER, PASSWORD) sont desormais lus depuis un fichier .env via
+django-environ, au lieu d'etre codes en dur dans Source/settings.py et
+docker-compose.yml. Le fichier .env est dans .gitignore, jamais commite.
+Une nouvelle SECRET_KEY a ete generee (l'ancienne, exposee publiquement,
+n'est plus utilisee). Verifie par un test complet : nouveau compte cree,
+nouveau token signe avec la nouvelle cle, lecture de l'API confirmee (200).
 
+Point important non resolu : l'ancienne SECRET_KEY reste visible dans
+l'historique Git du depot, meme si elle n'est plus utilisee dans le code
+actuel. Un nettoyage de l'historique (git filter-repo ou equivalent)
+serait necessaire pour l'effacer completement, non realise dans le cadre
+de cette session.
+
+Au passage, DEFAULT_AUTHENTICATION_CLASSES (finding moyen, section 13) a
+egalement ete corrige : JWTAuthentication est desormais declaree
+globalement dans Source/settings.py.
 SECTION 12 - FINDINGS ELEVES
 
 DEBUG=True et ALLOWED_HOSTS=["*"] par defaut
@@ -371,7 +381,8 @@ SECTION 13 - FINDINGS MOYENS
 
 DEFAULT_AUTHENTICATION_CLASSES vide globalement
 Localisation : Source/settings.py
-Statut : Ouvert, seul Beats/views.py a ete corrige pour l'instant
+Statut : Corrige le 2 septembre 2026, JWTAuthentication declaree
+globalement (voir section 11)
 
 Absence de rate limiting sur /api/auth/login
 Localisation : Core/Auth/viewSets.py
@@ -417,14 +428,12 @@ Fait :
 - Dependance typosquattee retiree, requirements.txt reecrit en UTF-8
 
 Prochaine etape, priorite immediate :
-- C-02, secrets en dur (SECRET_KEY, identifiants MySQL)
+- DEBUG, ALLOWED_HOSTS, CORS (finding eleve, section 12)
 
 Court terme :
-- DEBUG, ALLOWED_HOSTS, CORS
-- Centralisation de DEFAULT_AUTHENTICATION_CLASSES
+- Rate limiting sur le login
 
 Moyen terme :
-- Rate limiting sur le login
 - Validation des fichiers uploades
 - Correction des deux bugs de code (read_only_field, get_artist)
 
@@ -464,3 +473,4 @@ demarree localement via Docker Compose.
 Aucun scan automatise (Bandit, ZAP, Burp, pip-audit) n'a ete realise dans
 le cadre de cette session. Un audit complet en environnement professionnel
 devrait les inclure en complement.
+
