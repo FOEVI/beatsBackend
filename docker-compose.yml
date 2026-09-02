@@ -4,10 +4,10 @@ services:
     container_name: mysql-vuln
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: beatdb
-      MYSQL_USER: beatuser
-      MYSQL_PASSWORD: beatpass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -25,8 +25,8 @@ services:
     depends_on:
       mysql-vuln:
         condition: service_healthy
-    environment:
-      DJANGO_ALLOWED_HOSTS: "*"
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:

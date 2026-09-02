@@ -11,21 +11,24 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5g7g3ivmnov4krwlt_+#g!t8voijusmvvx1@3ba#pivkp*vlou'
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DJANGO_DEBUG', default=False)
 
-import os
 # This is used to set the allowed hosts, in production, you should set it to your domain name
 if 'DJANGO_ALLOWED_HOSTS' in os.environ:
     ALLOWED_HOSTS = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')
@@ -40,12 +43,10 @@ else:
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # Durée de vie du token d'accès
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Durée de vie du token de rafraîchissement
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ALGORITHM': 'HS256',
-    'VERIFYING_KEY': None,  # utilisé pour vérifier les tokens entrants
-    #'SIGNING_KEY': 'super-secret-key-used-for-signing',  # utilisée pour signer les tokens sortants
-    #'TOKEN_BACKEND_CLASS': 'Json-Web-Token-with-Django-API.Core.Auth.backend.UnsafeTokenBackend',
+    'VERIFYING_KEY': None,
 }
 
 
@@ -62,7 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',  # This is used to set the CORS headers, so that we can access the API from other domains
+    'corsheaders',
 
     ############ Externals packages ############
     'rest_framework',
@@ -75,16 +76,11 @@ INSTALLED_APPS = [
     'Beats',
 ]
 
-# Now, we are setting an Authentication with APi, We need to set the Default \
-# Authentication on Rest_Framework_simplejwt :
-
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':(
-        #'Core.Auth.backend.UnsafeTokenBackend',
-        #'rest_framework_simplejwt.authentication.JWTAuthentication',
-        
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_FILTER_BACKENDS':[
+    'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend' ],
 }
 
@@ -95,7 +91,7 @@ AUTH_USER_MODEL = 'Core.User'
 ###################################
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # This is used to set the CORS headers, so that we can access the API from other domains
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -129,18 +125,12 @@ WSGI_APPLICATION = 'Source.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-""" DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-} """
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beatdb',
-        'USER': 'beatuser',
-        'PASSWORD': 'beatpass',
+        'NAME': env('MYSQL_DATABASE'),
+        'USER': env('MYSQL_USER'),
+        'PASSWORD': env('MYSQL_PASSWORD'),
         'HOST': 'mysql-vuln',
         'PORT': '3306',
     }
