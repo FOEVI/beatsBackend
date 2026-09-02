@@ -1,3 +1,4 @@
+from rest_framework.throttling import ScopedRateThrottle
 from django.shortcuts import render
 
 from rest_framework.response import Response
@@ -47,11 +48,13 @@ class RegisterViewSet(ViewSet):
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
     
 class LoginViewSet(ViewSet):
-
     serializer_class = LoginSerializer # We now set the serializer with which information that are posted against this endpoint will be serialized
-
     permission_classes = [permissions.AllowAny,] # This endpoint should be accessible to anyone, because of curse it is the Login endpoint, where user will be authenticated
     http_method_names = ['post','options'] # Limiting the http method on this endpoint to 'post' method only
+    # Fix M-02 : limite de 5 tentatives par minute par IP, pour empecher
+    # une attaque brute force sur les mots de passe.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
     def create(self, request, *args, **kwargs):
 

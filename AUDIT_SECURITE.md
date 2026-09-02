@@ -203,7 +203,7 @@ Tableau des findings par severite, statut au 1er septembre 2026 :
 
 Severite Critique : 2 findings au total, 2 corriges (C-01, C-02)
 Severite Elevee : 4 findings au total, 4 corriges, 0 ouvert
-Severite Moyenne : 5 findings au total, 1 corrige, 4 ouverts
+Severite Moyenne : 5 findings au total, 2 corriges, 3 ouverts
 Severite Faible : 2 findings au total, 0 corrige
 
 SECTION 8 - C-01 CONTOURNEMENT TOTAL DE L'AUTHENTIFICATION JWT (CRITIQUE) - CORRIGE
@@ -395,7 +395,13 @@ globalement (voir section 11)
 
 Absence de rate limiting sur /api/auth/login
 Localisation : Core/Auth/viewSets.py
-Statut : Ouvert, confirme, aucune classe de throttling configuree
+Statut : Corrige le 2 septembre 2026. ScopedRateThrottle applique sur
+LoginViewSet (throttle_scope = 'login'), limite de 5 tentatives par
+minute par adresse IP definie dans DEFAULT_THROTTLE_RATES
+(Source/settings.py). Teste : 5 tentatives de login avec mauvais mot de
+passe passent normalement, la 6eme renvoie 429 "Request was throttled",
+compteur qui redescend avec le temps (verifie sur 2 appels successifs,
+21s puis 17s restantes).
 
 Absence de validation taille/type sur les fichiers uploades
 Localisation : Beats/models.py, Core/models.py

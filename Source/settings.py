@@ -86,6 +86,12 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend' ],
+    # Fix M-02 : limite de tentatives sur le login (voir Core/Auth/viewSets.py)
+    # pour empecher une attaque brute force (essayer des milliers de mots
+    # de passe a la suite sans limite).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+    },
 }
 
 AUTH_USER_MODEL = 'Core.User'
