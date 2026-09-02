@@ -202,7 +202,7 @@ et re-testee.
 Tableau des findings par severite, statut au 1er septembre 2026 :
 
 Severite Critique : 2 findings au total, 2 corriges (C-01, C-02)
-Severite Elevee : 4 findings au total, 2 corriges, 2 ouverts
+Severite Elevee : 4 findings au total, 4 corriges, 0 ouvert
 Severite Moyenne : 5 findings au total, 1 corrige, 4 ouverts
 Severite Faible : 2 findings au total, 0 corrige
 
@@ -359,15 +359,24 @@ de cette session.
 Au passage, DEFAULT_AUTHENTICATION_CLASSES (finding moyen, section 13) a
 egalement ete corrige : JWTAuthentication est desormais declaree
 globalement dans Source/settings.py.
+
 SECTION 12 - FINDINGS ELEVES
 
 DEBUG=True et ALLOWED_HOSTS=["*"] par defaut
 Localisation : Source/settings.py
-Statut : Ouvert
+Statut : Corrige le 2 septembre 2026. DEBUG deja pilote par .env depuis
+le correctif C-02. Valeur de secours de ALLOWED_HOSTS changee de
+["*", "localhost", "localhost:9002"] vers ["localhost", "127.0.0.1"],
+restrictive par defaut. Le labo local garde DJANGO_ALLOWED_HOSTS=* dans
+.env, choix explicite et documente, pas une negligence.
 
 CORS_ALLOW_ALL_ORIGINS=True par defaut
 Localisation : Source/settings.py
-Statut : Ouvert
+Statut : Corrige le 2 septembre 2026. CORS_ALLOWED_ORIGINS desormais
+pilotable depuis DJANGO_CORS_ALLOWED_ORIGINS dans .env (valeur de secours
+= liste vide, restrictive). Teste avec docker compose down puis up
+--build, migrations appliquees, API repondant normalement (verification
+via curl).
 
 db.sqlite3 versionne dans le depot
 Localisation : racine du depot

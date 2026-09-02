@@ -30,16 +30,20 @@ SECRET_KEY = env('DJANGO_SECRET_KEY')
 DEBUG = env.bool('DJANGO_DEBUG', default=False)
 
 # This is used to set the allowed hosts, in production, you should set it to your domain name
+# Fix H-01 : valeurs de secours restrictives par defaut. Si DJANGO_ALLOWED_HOSTS
+# n'est pas defini, on limite a localhost au lieu d'un wildcard "*" -- une
+# configuration explicite est necessaire pour ouvrir l'acces plus largement.
 if 'DJANGO_ALLOWED_HOSTS' in os.environ:
     ALLOWED_HOSTS = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')
 else:
-    # For development purposes, we can set it to an empty list
-    ALLOWED_HOSTS = ["*", "localhost", "localhost:9002"]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+# Fix H-01 : idem pour CORS, defaut restrictif (pas de wildcard) sauf
+# configuration explicite via DJANGO_CORS_ALLOWED_ORIGINS.
 if 'DJANGO_CORS_ALLOWED_ORIGINS' in os.environ:
     CORS_ALLOWED_ORIGINS = os.environ['DJANGO_CORS_ALLOWED_ORIGINS'].split(',')
 else:
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
 
 from datetime import timedelta
 SIMPLE_JWT = {
